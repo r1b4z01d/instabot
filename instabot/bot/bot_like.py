@@ -14,17 +14,21 @@ def like(self, media_id):
     return False
 
 
-def like_medias(self, medias):
+def like_medias(self, medias,hashtag):
     broken_items = []
     if len(medias) == 0:
         self.logger.info("Nothing to like.")
         return broken_items
     self.logger.info("Going to like %d medias." % (len(medias)))
     for media in tqdm(medias):
-        if not self.like(media):
+        mediaInfo = self.get_media_info(media)
+        if self.like(media):
+            self.save_hashtag_liked_stats(hashtag,mediaInfo[0]['user']['pk'],mediaInfo[0]['user']['username'],mediaInfo[0]['like_count'])
+        else:
             delay.error_delay(self)
             broken_items = medias[medias.index(media):]
             break
+
     self.logger.info("DONE: Total liked %d medias." % self.total_liked)
     return broken_items
 
@@ -62,7 +66,7 @@ def like_hashtag(self, hashtag, amount=None):
     """ Likes last medias from hashtag """
     self.logger.info("Going to like media with hashtag #%s." % hashtag)
     medias = self.get_hashtag_medias(hashtag)
-    return self.like_medias(medias[:amount])
+    return self.like_medias(medias[:amount],hashtag)
 
 
 def like_geotag(self, geotag, amount=None):

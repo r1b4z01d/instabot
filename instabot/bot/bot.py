@@ -5,7 +5,7 @@ import signal
 from ..api import API
 
 from .bot_get import get_media_owner, get_your_medias, get_user_medias
-from .bot_get import get_timeline_medias, get_hashtag_medias, get_user_info
+from .bot_get import get_timeline_medias, get_hashtag_medias, get_user_info, get_total_hashtag_medias
 from .bot_get import get_geotag_medias, get_timeline_users, get_hashtag_users, get_media_id_from_link
 from .bot_get import get_media_commenters, get_userid_from_username, get_username_from_userid
 from .bot_get import get_user_followers, get_user_following, get_media_likers, get_popular_medias
@@ -45,7 +45,7 @@ from .bot_filter import check_not_bot
 from .bot_support import check_if_file_exists, read_list_from_file, check_whitelists
 from .bot_support import add_whitelist, add_blacklist
 
-from .bot_stats import save_user_stats
+from .bot_stats import save_user_stats, get_user_stats, save_hashtag_liked_stats
 
 
 class Bot(API):
@@ -55,7 +55,7 @@ class Bot(API):
                  blacklist=False,
                  comments_file=False,
                  proxy=None,
-                 max_likes_per_day=1000,
+                 max_likes_per_day=2000,
                  max_unlikes_per_day=1000,
                  max_follows_per_day=350,
                  max_unfollows_per_day=350,
@@ -63,6 +63,7 @@ class Bot(API):
                  max_blocks_per_day=100,
                  max_unblocks_per_day=100,
                  max_likes_to_like=100,
+		 min_likes_to_like=4,
                  filter_users=True,
                  max_followers_to_follow=2000,
                  min_followers_to_follow=10,
@@ -79,8 +80,8 @@ class Bot(API):
                  comment_delay=60,
                  block_delay=30,
                  unblock_delay=30,
-                 stop_words=['shop', 'store', 'free']):
-        super(self.__class__, self).__init__()
+                 stop_words=['shop','buy','gift', 'store', 'likes','follower','free']):
+        super(Bot, self).__init__()
 
         self.total_liked = 0
         self.total_unliked = 0
@@ -112,6 +113,7 @@ class Bot(API):
         self.max_blocks_per_day = max_blocks_per_day
         self.max_unblocks_per_day = max_unblocks_per_day
         self.max_likes_to_like = max_likes_to_like
+	self.min_likes_to_like = min_likes_to_like
         self.max_followers_to_follow = max_followers_to_follow
         self.min_followers_to_follow = min_followers_to_follow
         self.max_following_to_follow = max_following_to_follow
@@ -163,7 +165,7 @@ class Bot(API):
 
     def logout(self):
         save_checkpoint(self)
-        super(self.__class__, self).logout()
+        super(Bot, self).logout()
         self.logger.info("Bot stopped. "
                          "Worked: %s" % (datetime.datetime.now() - self.start_time))
         self.print_counters()
@@ -171,7 +173,7 @@ class Bot(API):
     def login(self, **args):
         if self.proxy:
             args['proxy'] = self.proxy
-        super(self.__class__, self).login(**args)
+        super(Bot, self).login(**args)
         self.prepare()
         signal.signal(signal.SIGTERM, self.logout)
         atexit.register(self.logout)
@@ -239,6 +241,9 @@ class Bot(API):
     def get_hashtag_medias(self, hashtag, filtration=True):
         return get_hashtag_medias(self, hashtag, filtration)
 
+    def get_total_hashtag_medias(self, hashtag, amount=100, filtration=False):
+        return get_total_hashtag_medias(self, hashtag, amount, filtration)
+
     def get_geotag_medias(self, geotag, filtration=True):
         return get_geotag_medias(self, geotag, filtration)
 
@@ -301,8 +306,8 @@ class Bot(API):
     def like(self, media_id):
         return like(self, media_id)
 
-    def like_medias(self, media_ids):
-        return like_medias(self, media_ids)
+    def like_medias(self, media_ids, hashtag):
+        return like_medias(self, media_ids, hashtag)
 
     def like_timeline(self, amount=None):
         return like_timeline(self, amount)
@@ -503,3 +508,9 @@ class Bot(API):
 
     def save_user_stats(self, username, path=""):
         return save_user_stats(self, username, path=path)
+
+    def get_user_stats(self, username):
+        return get_user_stats(self, username)
+
+    def save_hashtag_liked_stats(self, hashtag, userid, username, likes, path=""):
+        return save_hashtag_liked_stats(self, hashtag, userid, username, likes, path=path)

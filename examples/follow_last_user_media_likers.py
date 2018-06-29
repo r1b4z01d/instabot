@@ -2,13 +2,13 @@
     instabot example
 
     Workflow:
-        Like last medias by users.
+        Follow users who liked the last media of input users.
 """
 
-import argparse
 import sys
-
 import os
+from tqdm import tqdm
+import argparse
 
 sys.path.append(os.path.join(sys.path[0], '../'))
 from instabot import Bot
@@ -20,9 +20,16 @@ parser.add_argument('-proxy', type=str, help="proxy")
 parser.add_argument('users', type=str, nargs='+', help='users')
 args = parser.parse_args()
 
-bot = Bot()
+bot = Bot(
+		max_follows_per_day = 25,
+		follow_delay = 30
+)
 bot.login(username=args.u, password=args.p,
           proxy=args.proxy)
 
 for username in args.users:
-    bot.like_user(username,10, filtration=True)
+    medias = bot.get_user_medias(username, filtration=False)
+    if len(medias):
+        likers = bot.get_media_likers(medias[0])
+        for liker in tqdm(likers):
+            bot.follow(liker)

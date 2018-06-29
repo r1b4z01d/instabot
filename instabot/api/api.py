@@ -141,13 +141,17 @@ class API(object):
             self.LastJson = json.loads(response.text)
             return True
         else:
-            self.logger.warning("Request return " +
-                                str(response.status_code) + " error!")
+            self.logger.error("Request return " + str(response.status_code) + " error!")
             if response.status_code == 429:
                 sleep_minutes = 5
                 self.logger.warning("That means 'too many requests'. "
                                     "I'll go to sleep for %d minutes." % sleep_minutes)
                 time.sleep(sleep_minutes * 60)
+            elif response.status_code == 400:
+                response_data = json.loads(response.text)
+                self.logger.info("Instagram error message: %s", response_data.get('message'))
+                if response_data.get('error_type'):
+                    self.logger.info('Error type: %s', response_data.get('error_type'))
 
             # for debugging
             try:
@@ -632,6 +636,24 @@ class API(object):
             if "more_available" not in temp or temp["more_available"] is False:
                 return user_feed
             next_max_id = temp["next_max_id"]
+
+    def getTotalHashtagFeed(self, hashtagString, amount=100):
+        hashtag_feed = []
+        next_max_id = ''
+
+        with tqdm(total=amount, desc="Getting hashtag medias", leave=False) as pbar:
+            while True:
+                self.getHashtagFeed(hashtagString, next_max_id)
+                temp = self.LastJson
+                try:
+                    pbar.update(len(temp["items"]))
+                    for item in temp["items"]:
+                        hashtag_feed.append(item)
+                    if len(temp["items"]) == 0 or len(hashtag_feed) >= amount:
+                        return hashtag_feed[:amount]
+                except:
+                    return hashtag_feed[:amount]
+                next_max_id = temp["next_max_id"]
 
     def getTotalSelfUserFeed(self, minTimestamp=None):
         return self.getTotalUserFeed(self.user_id, minTimestamp)

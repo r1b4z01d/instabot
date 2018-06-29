@@ -6,7 +6,7 @@ def get_tsv_line(dictionary):
     line = ""
     for key in sorted(dictionary):
         line += str(dictionary[key]) + "\t"
-    return line[:-2] + "\n"
+    return line[:-1] + "\n"
 
 
 def get_header_line(dictionary):
@@ -46,4 +46,26 @@ def save_user_stats(self, username, path=""):
         file_path = os.path.join(path, "%s.tsv" % username)
         dump_data(data_to_save, file_path)
         self.logger.info("Stats saved at %s." % data_to_save["date"])
+    return False
+
+def get_user_stats(self, username):
+    if not username:
+        username = self.username
+    user_id = self.convert_to_user_id(username)
+    infodict = self.get_user_info(user_id)
+    return infodict
+
+
+def save_hashtag_liked_stats(self, hashtag, userid, username, likes, path=""):
+    data_to_save = {
+        "date": str(datetime.datetime.now().replace(microsecond=0)),
+        "hashtag": hashtag,
+        "userid": userid,
+        "username": username ,
+        "likes": likes
+    }
+
+    file_path = os.path.join(path, "hashtag_liked.tsv")
+    dump_data(data_to_save, file_path)
+    #self.logger.info("Hashtag liked stats saved")
     return False

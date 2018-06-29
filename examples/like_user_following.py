@@ -27,4 +27,4 @@ bot.login(username=args.u, password=args.p,
           proxy=args.proxy)
 
 for username in args.users:
-    bot.like_following(username, nlikes=3)
+    bot.like_following(username, nlikes=10)
