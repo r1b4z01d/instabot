@@ -1,3 +1,4 @@
+import sys
 from tqdm import tqdm
 from . import limits
 from . import delay
@@ -11,6 +12,7 @@ def like(self, media_id):
             return True
     else:
         self.logger.info("Out of likes for today.")
+        sys.exit()
     return False
 
 
